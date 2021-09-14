@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import LoadingScreen from "./screens/LoadingScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
-
+import "expo-asset";
 import HomeScreen from "./screens/HomeScreen";
 import MessageScreen from "./screens/MessageScreen";
 import PostScreen from "./screens/PostScreen";
