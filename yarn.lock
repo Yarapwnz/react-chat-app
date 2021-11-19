@@ -5148,6 +5148,11 @@
   "resolved" "https://registry.npmjs.org/posix-character-classes/-/posix-character-classes-0.1.1.tgz"
   "version" "0.1.1"
 
+"prettier@2.4.1":
+  "integrity" "sha512-9fbDAXSBcc6Bs1mZrDYb3XKzDLm4EXXL9sC1LqKP5rZkT6KRr/rf9amVUcODVXgguK/isJz0d0hP72WeaKWsvA=="
+  "resolved" "https://registry.npmjs.org/prettier/-/prettier-2.4.1.tgz"
+  "version" "2.4.1"
+
 "pretty-format@^24.9.0":
   "integrity" "sha512-00ZMZUiHaJrNfk33guavqgvfJS30sLYf0f8+Srklv0AMPodGGHcoHgksZ3OThYnIvOd+8yMCn0YiEOogjlgsnA=="
   "resolved" "https://registry.npmjs.org/pretty-format/-/pretty-format-24.9.0.tgz"
