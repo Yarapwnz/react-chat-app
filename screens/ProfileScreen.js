@@ -1,28 +1,118 @@
 import React from "react";
-import {View, Text, StyleSheet, Button, Image} from "react-native";
+import {View, Text, StyleSheet, Button, Image, FlatList, TouchableOpacity} from "react-native";
+import {Ionicons} from "@expo/vector-icons";
+import moment from "moment";
 import Fire from "../Fire";
+import { doc } from "prettier";
 
 export default class ProfileScreen extends React.Component {
     state = {
-        user: {}
+        users: [],
+        oneUser: {}
     };
 
     unsubscribe = null;
 
-    componentDidMount() {
-        const user = this.props.uid || Fire.shared.uid
+    async getPosts (userId) {
+        const postsCollection = await Fire.shared.firestore
+        .collection(`users/` + userId + `/postData`)
+        .get()
 
-        this.unsubscribe = Fire.shared.firestore
-            .collection("users")
-            .doc(user)
-            .onSnapshot(doc => {
-                this.setState({user: doc.data()});
-            });
+        return postsCollection.docs.map(doc => ({...doc.data(), id: doc.id}));
+    }
+    
+    async getUser (userId) {
+        const doc = await Fire.shared.firestore
+        .collection(`users`)
+        .doc(userId)
+        .get()
+
+        
+        const user = doc.data()
+        
+        user.id = doc.id
+        user.posts = await this.getPosts(user.id)
+        return user
     }
 
-    componentWillUnmount() {
-        this.unsubscribe();
+    async componentDidMount() {
+        const user = this.props.uid || Fire.shared.uid; 
+    
+        const currentUser = await this.getUser(user)
+        this.setState({oneUser: currentUser})
+
+        const usersCollection = await Fire.shared.firestore
+            .collection(`users`)
+            .get()
+
+        const users = await Promise.all(usersCollection.docs.map(async doc => {
+            const user = doc.data()
+            user.id = doc.id
+            user.posts = await this.getPosts(user.id)
+            return user
+        }))
+
+        this.setState({users})        
     }
+
+    dropPost = (postID) => {
+        console.log(postID);
+        const user = this.props.uid || Fire.shared.uid;
+        const dropPost = Fire.shared.firestore
+            .collection(`users/` + user + `/postData`)
+            .doc(postID)
+            .delete()
+            .then(() => {
+                console.log("Post deleted");
+            })
+        return dropPost
+    }
+
+    renderPost = (post) => {
+        return (
+                    <View style={styles.feedItem}>
+                    <Image source={{uri: this.state.oneUser.avatar}} style={styles.avatar}/>
+                    <View style={{flex: 1}}>
+                        <View
+                            style={{
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                            }}
+                        >
+                            <View>
+                                <Text style={styles.name}>{this.state.oneUser.name}</Text>
+                                <Text style={styles.timestamp}>
+                                    {moment(post.timestamp).fromNow()}
+                                </Text>
+                            </View>
+                            <TouchableOpacity onPress={() => this.dropPost(post.id)}>
+                                <Ionicons name="ios-trash" size={24} color="#73788B"/>
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={styles.post}>{post.text}</Text>
+                        <Image
+                            source={{uri: post.image}}
+                            style={styles.postImage}
+                            resizeMode="cover"
+                        />
+                        <View style={{flexDirection: "row"}}>
+                        <TouchableOpacity>
+                            <Ionicons
+                                name="heart-outline"
+                                size={24}
+                                color="#73788B"
+                                style={{marginRight: 16}}
+                            />
+                        </TouchableOpacity>
+                        <TouchableOpacity>
+                            <Ionicons name="ios-chatbox-outline" size={24} color="#73788B"/>
+                        </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+        );
+    };
 
     render() {
         return (
@@ -31,14 +121,12 @@ export default class ProfileScreen extends React.Component {
                     <View style={styles.avatarContainer}>
                         <Image
                             source={
-                                this.state.user.avatar
-                                    ? {uri: this.state.user.avatar}
-                                    : require("../assets/tempAvatar.jpg")
+                                {uri: this.state.oneUser.avatar}
                             }
-                            style={styles.avatar}
+                            style={styles.avatarUser}
                         />
                     </View>
-                    <Text style={styles.name}>{this.state.user.name}</Text>
+                    <Text style={styles.name}>{this.state.oneUser.name}</Text>
                 </View>
                 <View style={styles.statsContainer}>
                     <View style={styles.stat}>
@@ -61,6 +149,13 @@ export default class ProfileScreen extends React.Component {
                     }}
                     title="Log out"
                 />
+                <FlatList 
+                    style={styles.feed}
+                    renderItem={({item}) => this.renderPost(item)}
+                    keyExtractor={(item) => item.id}
+                    showsVerticalScrollIndicator={false}
+                    data={this.state.oneUser.posts}
+                />    
             </View>
         );
     }
@@ -79,7 +174,7 @@ const styles = StyleSheet.create({
         shadowRadius: 30,
         shadowOpacity: 0.4
     },
-    avatar: {
+    avatarUser: {
         width: 136,
         height: 136,
         borderRadius: 68
@@ -108,5 +203,42 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: "500",
         marginTop: 4
-    }
+    },
+    feedItem: {
+        backgroundColor: "#FFF",
+        borderRadius: 5,
+        padding: 8,
+        flexDirection: "row",
+        marginVertical: 8,
+    },
+    avatar: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        marginRight: 16,
+    },
+    name: {
+        fontSize: 15,
+        fontWeight: "500",
+        color: "#454D65",
+    },
+    timestamp: {
+        fontSize: 11,
+        color: "#C4C6CE",
+        marginTop: 4,
+    },
+    post: {
+        marginTop: 16,
+        fontSize: 14,
+        color: "#838899",
+    },
+    postImage: {
+        width: undefined,
+        height: 150,
+        borderRadius: 5,
+        marginVertical: 16,
+    },
+    feed: {
+        marginHorizontal: 16,
+    },
 });

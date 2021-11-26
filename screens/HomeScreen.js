@@ -1,5 +1,5 @@
 import React from "react";
-import {View, Text, StyleSheet, Image, FlatList} from "react-native";
+import {View, Text, StyleSheet, Image, FlatList, TouchableOpacity} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import moment from "moment";
 import Fire from "../Fire";
@@ -24,7 +24,7 @@ export default class HomeScreen extends React.Component {
                 .get()
 
             user.id = doc.id
-            user.posts = postsCollection.docs.map(doc => doc.data());
+            user.posts = postsCollection.docs.map(doc => ({id: doc.id, ...doc.data()}));
             return user
         }))
 
@@ -32,10 +32,9 @@ export default class HomeScreen extends React.Component {
     }
 
     renderPost = (user) => {
-        console.log(user)
         return (
             <>
-                {user.posts.map(post => (<View style={styles.feedItem}>
+                {user.posts.map(post => (<View style={styles.feedItem} key={post.id}>
                     <Image source={{uri: user.avatar}} style={styles.avatar}/>
                     <View style={{flex: 1}}>
                         <View
@@ -51,8 +50,9 @@ export default class HomeScreen extends React.Component {
                                     {moment(post.timestamp).fromNow()}
                                 </Text>
                             </View>
-
-                            <Ionicons name="md-arrow-redo-outline" size={24} color="#73788B"/>
+                            <TouchableOpacity>
+                                <Ionicons name="md-arrow-redo-outline" size={24} color="#73788B"/>
+                            </TouchableOpacity>
                         </View>
                         <Text style={styles.post}>{post.text}</Text>
                         <Image
@@ -89,10 +89,6 @@ export default class HomeScreen extends React.Component {
                     showsVerticalScrollIndicator={false}
                     data={this.state.users}
                 />
-
-                {/*{this.state.users.map(user => (*/}
-                {/*    <Text style={styles.post}>{user.avatar}</Text>)*/}
-                {/*)}*/}
             </View>
         );
     }
